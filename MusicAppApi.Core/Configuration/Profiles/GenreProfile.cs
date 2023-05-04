@@ -17,13 +17,16 @@ namespace MusicAppApi.Core.Configuration.Profiles
             CreateMap<Genre, GenreResponse>()
                 .ForMember(dest => dest.Genre,
                     (opt) =>
-                        opt.MapFrom(src => src.TypeOfGenre.ToString()));
+                        opt.MapFrom(src => src.TypeOfGenre.ToString()))
+                .ForMember(dest => dest.Id,
+                    opt => { opt.MapFrom(src => src.Id); });
 
             CreateMap<GenreResponse, Genre>()
                 .ForMember(dest => dest.TypeOfGenre,
                     opt =>
-                        opt.MapFrom(src => Enum.Parse<Genres>(src.Genre)));
-
+                        opt.MapFrom(src => Enum.Parse<Genres>(src.Genre)))
+                .ForMember(dest => dest.Id,
+                    opt => { opt.MapFrom(src => src.Id); });
         }
     }
 }

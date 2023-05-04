@@ -37,7 +37,7 @@ namespace MusicAppApi.API.Controllers
 
         private readonly IConfiguration _configuration;
         private readonly JWTConfiguration jWTConfiguration;
-        private readonly JwtGenerator jwtGenerator;
+        private readonly IJWTGenerator jwtGenerator;
         private readonly IEmailService _emailService;
 
         public AuthenticationController(UserManager<User> userManager,
@@ -45,7 +45,7 @@ namespace MusicAppApi.API.Controllers
             IConfiguration configuration,
             IOptions<JWTConfiguration> options,
             IEmailService emailService,
-            JwtGenerator jwtGenerator, 
+            IJWTGenerator jwtGenerator,
             SignInManager<User> signInManger)
         {
             _userManager = userManager;
@@ -238,7 +238,7 @@ namespace MusicAppApi.API.Controllers
         [HttpGet("TestEmail")]
         public async Task<IActionResult> TestEmail()
         {
-            await _emailService.SendEmailAsync(new Message(new string[]{"mishkfreddy123@gmail.com", "mishkafreddy1234@gmail.com"}, "Test", "MSkdmklaskkdmlsad"));
+            await _emailService.SendEmailAsync(new Message(new string[] { "mishkfreddy123@gmail.com", "mishkafreddy1234@gmail.com" }, "Test", "MSkdmklaskkdmlsad"));
 
             return Ok();
         }

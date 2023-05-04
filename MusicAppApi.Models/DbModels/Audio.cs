@@ -10,11 +10,11 @@ namespace MusicAppApi.Models.DbModels
 {
     public class Audio : DbItem
     {
-        public string Name { get; set; } = null!;
-        public string AudioUrl { get; set; } = null!;
-        public string PosterUrl { get; set; } = null!;
+        public string Name { get; set; }
+        public string AudioUrl { get; set; }
+        public string? PosterUrl { get; set; }
         public Guid GenreId { get; set; }
-        public Genre Genre { get; set; } = null!;
-        public ICollection<User> Artists { get; set; } = null!;
+        public Genre Genre { get; set; }
+        public ICollection<User> Artists { get; set; }
     }
 }
