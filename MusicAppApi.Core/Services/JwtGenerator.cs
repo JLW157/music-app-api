@@ -31,7 +31,7 @@ namespace MusicAppApi.Core.Services
             var authClaims = new List<Claim>
             {
                 new Claim(ClaimTypes.Role, AuthConstants.UserRoles.User),
-                new Claim(ClaimTypes.Sid, userId.ToString())
+                new Claim(ClaimTypes.Email, userId.ToString())
             };
 
             var token = new JwtSecurityToken(

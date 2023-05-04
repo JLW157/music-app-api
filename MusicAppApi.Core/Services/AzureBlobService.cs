@@ -18,7 +18,7 @@ namespace MusicAppApi.Core.Services
             {
                 // to key vault (!)
                 var connStr =
-                    "";
+                    "DefaultEndpointsProtocol=https;AccountName=audiostorageweb123;AccountKey=yS89cvaxaLmysCNRQP6BUJd8duqBuIA1cv0RYaTRsD/ScBLznx8Rsifp13mnLRhTV/JUCdSriMPR+AStRW/yww==;EndpointSuffix=core.windows.net";
                 BlobServiceClient blobServiceClient = new BlobServiceClient(connStr);
                 BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
 
