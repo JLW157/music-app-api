@@ -23,6 +23,7 @@ namespace MusicAppApi.Core.Services
             this.jwtConfiguration = options.Value;
         }
 
+
         public string GenerateToken(string userId)
         {
             var authSigngingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfiguration.AccessTokenSecret));
