@@ -10,6 +10,9 @@ namespace MusicAppApi.Models.DTO_s.Audio
 {
     public class UploadAudio
     {
-        public IFormFile File { get; set; }
+        public IFormFile Track { get; set; }
+        public IFormFile? Image { get; set; }
+        public string Title { get; set; }
+        public string Genre { get; set; }
     }
 }
