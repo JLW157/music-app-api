@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace MusicAppApi.Core.Interfaces
 {
-    public interface IJWTGenerator
+    public interface IJwtGenerator
     {
-        string GenerateToken(string userId);
+        string GenerateToken(string email, string userId);
     }
 }

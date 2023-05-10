@@ -14,34 +14,35 @@ using MusicAppApi.Core.Interfaces;
 
 namespace MusicAppApi.Core.Services
 {
-    public class JwtGenerator : IJWTGenerator
+    public class JwtGenerator : IJwtGenerator
     {
-        private readonly JWTConfiguration jwtConfiguration;
+        private readonly JWTConfiguration _jwtConfiguration;
 
         public JwtGenerator(IOptions<JWTConfiguration> options)
         {
-            this.jwtConfiguration = options.Value;
+            this._jwtConfiguration = options.Value;
         }
 
-
-        public string GenerateToken(string userId)
+        public string GenerateToken(string email, string userId)
         {
-            var authSigngingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfiguration.AccessTokenSecret));
+            var authSigngingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfiguration.AccessTokenSecret));
             var tokenHandler = new JwtSecurityTokenHandler();
 
             var authClaims = new List<Claim>
             {
+                new Claim(AuthConstants.ClaimNames.Id, userId.ToString()),
                 new Claim(ClaimTypes.Role, AuthConstants.UserRoles.User),
-                new Claim(ClaimTypes.Email, userId.ToString())
+                new Claim(ClaimTypes.Email, email.ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
             var token = new JwtSecurityToken(
-                issuer: jwtConfiguration.Issuer,
-                audience: jwtConfiguration.Audience,
-                expires: DateTime.Now.AddMinutes(jwtConfiguration.AccessTokenExpirationMinutes),
+                issuer: _jwtConfiguration.Issuer,
+                audience: _jwtConfiguration.Audience,
+                expires: DateTime.Now.AddMinutes(_jwtConfiguration.AccessTokenExpirationMinutes),
                 claims: authClaims,
                 signingCredentials: new SigningCredentials(authSigngingKey, SecurityAlgorithms.HmacSha256)
-                );
+            );
 
             return tokenHandler.WriteToken(token);
         }
