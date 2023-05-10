@@ -37,7 +37,7 @@ namespace MusicAppApi.API.Controllers
 
         private readonly IConfiguration _configuration;
         private readonly JWTConfiguration jWTConfiguration;
-        private readonly IJWTGenerator jwtGenerator;
+        private readonly IJwtGenerator jwtGenerator;
         private readonly IEmailService _emailService;
 
         public AuthenticationController(UserManager<User> userManager,
@@ -45,7 +45,7 @@ namespace MusicAppApi.API.Controllers
             IConfiguration configuration,
             IOptions<JWTConfiguration> options,
             IEmailService emailService,
-            IJWTGenerator jwtGenerator,
+            IJwtGenerator jwtGenerator,
             SignInManager<User> signInManger)
         {
             _userManager = userManager;
@@ -96,7 +96,7 @@ namespace MusicAppApi.API.Controllers
 
                 return Ok(new AuthenticatedUserResposne
                 {
-                    Token = jwtGenerator.GenerateToken(payload.Email),
+                    Token = jwtGenerator.GenerateToken(payload.Email, user.Id.ToString()),
                     Expiration = DateTime.Now.AddMinutes(jWTConfiguration.AccessTokenExpirationMinutes)
                 });
             }

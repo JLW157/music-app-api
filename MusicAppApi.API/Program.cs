@@ -64,7 +64,7 @@ builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
     options.TokenLifespan = TimeSpan.FromHours(1);
 });
 
-builder.Services.AddTransient<IJWTGenerator, JwtGenerator>();
+builder.Services.AddTransient<IJwtGenerator, JwtGenerator>();
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddTransient<IAzureBlobService, AzureBlobService>();
 
