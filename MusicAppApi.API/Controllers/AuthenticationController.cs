@@ -24,6 +24,7 @@ using MusicAppApi.Core;
 using MusicAppApi.Core.Interfaces;
 using MusicAppApi.Models.GeneralModels;
 using Newtonsoft.Json.Linq;
+using Elastic.Clients.Elasticsearch;
 
 namespace MusicAppApi.API.Controllers
 {
@@ -78,7 +79,7 @@ namespace MusicAppApi.API.Controllers
 
                     user = new User()
                     {
-                        UserName = payload.Email,
+                        UserName = payload.GivenName,
                         Email = payload.Email,
                         EmailConfirmed = true,
                         AuthType = AuthType.Google,
@@ -96,7 +97,7 @@ namespace MusicAppApi.API.Controllers
 
                 return Ok(new AuthenticatedUserResposne
                 {
-                    Token = jwtGenerator.GenerateToken(payload.Email, user.Id.ToString()),
+                    Token = jwtGenerator.GenerateToken(payload.Email, user.UserName, user.Id.ToString()),
                     Expiration = DateTime.Now.AddMinutes(jWTConfiguration.AccessTokenExpirationMinutes)
                 });
             }
@@ -136,7 +137,8 @@ namespace MusicAppApi.API.Controllers
                 {
                     new Claim(AuthConstants.ClaimNames.Id, user.Id.ToString()),
                     new Claim(ClaimTypes.Email, user.Email),
-                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                 };
 
             // adding all roles which was found

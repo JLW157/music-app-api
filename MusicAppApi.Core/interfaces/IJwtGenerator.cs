@@ -8,6 +8,6 @@ namespace MusicAppApi.Core.Interfaces
 {
     public interface IJwtGenerator
     {
-        string GenerateToken(string email, string userId);
+        string GenerateToken(string email, string userName, string userId);
     }
 }

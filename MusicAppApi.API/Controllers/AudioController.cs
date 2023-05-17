@@ -20,14 +20,14 @@ namespace MusicAppApi.API.Controllers
     public class AudioController : ControllerBase
     {
         private readonly MusicAppDbContext _context;
-        private readonly IMapper mapper;
+        private readonly IMapper _mapper;
         private readonly IAzureBlobService _azureBlobService;
 
         public AudioController(MusicAppDbContext context,
             IMapper mapper, IAzureBlobService blobService)
         {
             this._context = context;
-            this.mapper = mapper;
+            this._mapper = mapper;
             _azureBlobService = blobService;
         }
 
@@ -39,8 +39,35 @@ namespace MusicAppApi.API.Controllers
                 .Include(x => x.Genre)
                 .ToListAsync();
 
-            return mapper.Map<List<Audio>, List<AudioResponse>>(audios);
+            return _mapper.Map<List<Audio>, List<AudioResponse>>(audios);
         }
+
+        [HttpGet("userAudios")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<ActionResult<IEnumerable<AudioResponse>>> GetUserAudios()
+        {
+            var artistIdClaim = HttpContext.User.Claims.FirstOrDefault(x => x.Type == AuthConstants.ClaimNames.Id);
+            if (artistIdClaim == null)
+            {
+                return BadRequest("Invalid user");
+            }
+
+            var artist = await _context.Users.FirstOrDefaultAsync(x => x.Id == Guid.Parse(artistIdClaim.Value));
+            if (artist == null)
+            {
+                return BadRequest("Invalid user");
+            }
+
+            var audios = await _context.Audios
+                .Include(x => x.Artists)
+                .Include(x => x.Genre)
+                .Where(a => a.Artists.Any(a => a.Id == artist.Id))
+                .ToListAsync();
+
+            var mappedAudios = _mapper.Map<List<Audio>, List<AudioResponse>>(audios);
+            return Ok(mappedAudios);
+        }
+
 
         [HttpPost]
         public async Task<ActionResult> CreateAudio(AudioCreationDTO audioCreationDTO)
@@ -73,7 +100,7 @@ namespace MusicAppApi.API.Controllers
 
             await _context.Audios.AddAsync(audioToAdd);
 
-            return Ok(mapper.Map<Audio, AudioResponse>(audioToAdd));
+            return Ok(_mapper.Map<Audio, AudioResponse>(audioToAdd));
         }
 
         [HttpPost("upload")]
@@ -159,7 +186,7 @@ namespace MusicAppApi.API.Controllers
 
         //    await _context.SaveChangesAsync();
 
-        //    return mapper.Map<Track, AudioResponse>(audio);
+        //    return _mapper.Map<Track, AudioResponse>(audio);
         //}
 
         [HttpGet("popular")]
@@ -168,7 +195,7 @@ namespace MusicAppApi.API.Controllers
         {
             var audios = await _context.Audios.Include(x => x.Genre).Include(x => x.Artists).Take(20).ToListAsync();
 
-            return mapper.Map<List<Audio>, List<AudioResponse>>(audios);
+            return _mapper.Map<List<Audio>, List<AudioResponse>>(audios);
         }
 
         [HttpGet("test")]

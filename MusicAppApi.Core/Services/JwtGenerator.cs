@@ -23,7 +23,7 @@ namespace MusicAppApi.Core.Services
             this._jwtConfiguration = options.Value;
         }
 
-        public string GenerateToken(string email, string userId)
+        public string GenerateToken(string email, string userName, string userId)
         {
             var authSigngingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfiguration.AccessTokenSecret));
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -33,6 +33,7 @@ namespace MusicAppApi.Core.Services
                 new Claim(AuthConstants.ClaimNames.Id, userId.ToString()),
                 new Claim(ClaimTypes.Role, AuthConstants.UserRoles.User),
                 new Claim(ClaimTypes.Email, email.ToString()),
+                new Claim(ClaimTypes.Name, userName),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 

@@ -13,8 +13,12 @@ using MusicAppApi.Core.Services;
 using MusicAppApi.Models.Configurations;
 using MusicAppApi.Models.DbModels;
 using System.Text;
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 using MusicAppApi.Core.Constants;
 using MusicAppApi.Core.Interfaces;
+using Nest;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,11 +27,28 @@ builder.Services.AddControllers((options) =>
     // model validation
     options.Filters.Add(new ValidateModelFilter());
 
-    // badrequest and unauthorized formatter
+    // badrequest and unauthorized formatterw
     options.Filters.Add(new HttpResponseFilter());
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.WebHost.ConfigureAppConfiguration((context, config) =>
+{
+    var env = context.HostingEnvironment;
+
+    var builtConfiguration = config.Build();
+
+    string kvUrl = builtConfiguration[$"KeyVaultConfig:{env.EnvironmentName}:KVUrl"];
+    string tenantId = builtConfiguration[$"KeyVaultConfig:{env.EnvironmentName}:TenantId"];
+    string clientId = builtConfiguration[$"KeyVaultConfig:{env.EnvironmentName}:ClientId"];
+    string clientSecret = builtConfiguration[$"KeyVaultConfig:{env.EnvironmentName}:ClientSecretId"];
+
+    var credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
+
+    var client = new SecretClient(new Uri(kvUrl), credential);
+    config.AddAzureKeyVault(client, new AzureKeyVaultConfigurationOptions());
+});
 
 builder.Services.AddCors(opt =>
 {
@@ -128,7 +149,8 @@ builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection(
 
 builder.Services.AddDbContext<MusicAppDbContext>(opts =>
 {
-    opts.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+    opts.UseSqlServer(connStr);
 });
 
 builder.Services.RegisterCoreDependencies();
