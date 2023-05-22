@@ -15,6 +15,7 @@ namespace MusicAppApi.Models.DbModels
         public string? PosterUrl { get; set; }
         public Guid GenreId { get; set; }
         public Genre Genre { get; set; }
+        public int PlayedCount { get; set; }
         public ICollection<User> Artists { get; set; }
     }
 }

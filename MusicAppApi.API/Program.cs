@@ -16,9 +16,9 @@ using System.Text;
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using MusicAppApi.API.Hub;
 using MusicAppApi.Core.Constants;
 using MusicAppApi.Core.Interfaces;
-using Nest;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +32,8 @@ builder.Services.AddControllers((options) =>
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddSignalR();
 
 builder.WebHost.ConfigureAppConfiguration((context, config) =>
 {
@@ -49,15 +51,17 @@ builder.WebHost.ConfigureAppConfiguration((context, config) =>
     var client = new SecretClient(new Uri(kvUrl), credential);
     config.AddAzureKeyVault(client, new AzureKeyVaultConfigurationOptions());
 });
-
 builder.Services.AddCors(opt =>
 {
     var frontUrl = builder.Configuration.GetValue<string>("front-url");
 
     opt.AddDefaultPolicy(builderCors =>
     {
-        builderCors.WithOrigins(frontUrl).AllowAnyMethod().AllowAnyHeader().
-        WithExposedHeaders(new string[] { "totalAmountOfRecords" });
+        builderCors.WithOrigins("http://localhost:5173", frontUrl) // Replace 'frontUrl' with the actual allowed origin
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials()
+            .WithExposedHeaders(new string[] { "totalAmountOfRecords" });
     });
 });
 
@@ -180,6 +184,8 @@ app.UseHttpsRedirection();
 
 app.UseAuthorization();
 app.UseAuthentication();
+
+app.MapHub<TrackCountHub>("/trackCount");
 
 app.MapControllers();
 

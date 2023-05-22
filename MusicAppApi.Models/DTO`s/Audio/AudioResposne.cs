@@ -13,6 +13,7 @@ namespace MusicAppApi.Models.DTO_s
         public string AudioUrl { get; set; } = null!;
         public string PosterUrl { get; set; } = null!;
         public string Genre { get; set; } = null!;
+        public int PlayedCount { get; set; }
         public List<string> Artists { get; set; } = null!;
     }
 }

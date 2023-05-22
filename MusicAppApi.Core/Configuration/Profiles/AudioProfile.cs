@@ -14,6 +14,8 @@ namespace MusicAppApi.Core.Configuration.Profiles
         public AudioProfile()
         {
             CreateMap<Audio, AudioResponse>()
+                .ForMember(dest => dest.PlayedCount,
+                    (opt) => opt.MapFrom(src => src.PlayedCount))
                  .ForMember(dest => dest.Id,
                  (opt) => opt.MapFrom(src => src.Id))
                  .ForMember(dest => dest.Name,
@@ -24,7 +26,7 @@ namespace MusicAppApi.Core.Configuration.Profiles
                   (opt) => opt.MapFrom(src => src.Artists.Select(x => x.UserName).ToList()))
                   .ForMember(dest => dest.AudioUrl,
                   (opt) => opt.MapFrom(src => src.AudioUrl))
-                  .ForMember(dest => dest.PosterUrl, 
+                  .ForMember(dest => dest.PosterUrl,
                   (opt) => opt.MapFrom(src => src.PosterUrl));
         }
     }

@@ -42,6 +42,35 @@ namespace MusicAppApi.API.Controllers
             return _mapper.Map<List<Audio>, List<AudioResponse>>(audios);
         }
 
+        [HttpGet("audioByName")]
+        public async Task<ActionResult<AudioResponse>> GetAudioByName([FromQuery]string name)
+        {
+            var audio = await _context.Audios.Include(x => x.Artists).Include(x => x.Genre)
+                .FirstOrDefaultAsync(a => a.Name == name);
+
+            if (audio != null)
+            {
+                return Ok(_mapper.Map<Audio, AudioResponse>(audio));
+            }
+
+            return BadRequest("Audio not found");
+        }
+
+        [HttpGet("userAudiosByUsername")]
+        public async Task<ActionResult> GetUserAudiosByUsername([FromQuery]string username)
+        {
+            // todo: implement user audios
+
+            var audios = await _context.Audios
+                .Include(x => x.Artists)
+                .Include(x => x.Genre)
+                .Where(x => x.Artists.Any(x => x.UserName == username)).ToListAsync();
+
+            var mappedAudios = _mapper.Map<List<Audio>, List<AudioResponse>>(audios);
+            
+            return Ok(mappedAudios);
+        }
+
         [HttpGet("userAudios")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<ActionResult<IEnumerable<AudioResponse>>> GetUserAudios()
