@@ -25,6 +25,7 @@ using MusicAppApi.Core.Interfaces;
 using MusicAppApi.Models.GeneralModels;
 using Newtonsoft.Json.Linq;
 using Elastic.Clients.Elasticsearch;
+using MusicAppApi.Core.interfaces;
 
 namespace MusicAppApi.API.Controllers
 {
@@ -32,30 +33,27 @@ namespace MusicAppApi.API.Controllers
     [ApiController]
     public class AuthenticationController : ControllerBase
     {
-        private readonly UserManager<User> _userManager;
-        private readonly RoleManager<Role> _roleManager;
-        private readonly SignInManager<User> _signInManager;
-
         private readonly IConfiguration _configuration;
         private readonly JWTConfiguration jWTConfiguration;
         private readonly IJwtGenerator jwtGenerator;
         private readonly IEmailService _emailService;
+        private readonly IUserService _userService;
+        private readonly IRoleService _roleService;
 
-        public AuthenticationController(UserManager<User> userManager,
-            RoleManager<Role> roleManager,
+        public AuthenticationController(
+            IRoleService roleService,
+            IUserService userSercice,
             IConfiguration configuration,
             IOptions<JWTConfiguration> options,
             IEmailService emailService,
-            IJwtGenerator jwtGenerator,
-            SignInManager<User> signInManger)
+            IJwtGenerator jwtGenerator)
         {
-            _userManager = userManager;
-            this._roleManager = roleManager;
+            _userService = userSercice;
+            _roleService = roleService;
             _configuration = configuration;
             this.jWTConfiguration = options.Value;
             _emailService = emailService;
             this.jwtGenerator = jwtGenerator;
-            _signInManager = signInManger;
         }
 
         [HttpPost]
@@ -71,7 +69,7 @@ namespace MusicAppApi.API.Controllers
 
                 // check if user exists by email in db
 
-                var user = await _userManager.FindByEmailAsync(payload.Email);
+                var user = await _userService.GetUserByEmail(payload.Email);
 
                 if (user == null)
                 {
@@ -85,11 +83,10 @@ namespace MusicAppApi.API.Controllers
                         AuthType = AuthType.Google,
                     };
 
-                    var result = await _userManager.CreateAsync(user, Guid.NewGuid().ToString());
+                    var result = await _userService.CreateUser(user, Guid.NewGuid().ToString());
 
                     if (!result.Succeeded)
                         return BadRequest("O-ops, something went wrong");
-
                 }
 
                 if (user.AuthType == AuthType.Normal)
@@ -97,7 +94,7 @@ namespace MusicAppApi.API.Controllers
 
                 return Ok(new AuthenticatedUserResposne
                 {
-                    Token = jwtGenerator.GenerateToken(payload.Email, user.UserName, user.Id.ToString()),
+                    Token = jwtGenerator.GenerateToken(payload.Email, user?.UserName, user?.Id.ToString()),
                     Expiration = DateTime.Now.AddMinutes(jWTConfiguration.AccessTokenExpirationMinutes)
                 });
             }
@@ -114,7 +111,7 @@ namespace MusicAppApi.API.Controllers
         {
             var userFromContextUser = HttpContext.User;
 
-            var user = await _userManager.FindByEmailAsync(loginModel.Email);
+            var user = await _userService.GetUserByEmail(loginModel.Email);
 
             if (user == null)
             {
@@ -126,12 +123,12 @@ namespace MusicAppApi.API.Controllers
                 return Unauthorized("Use google authentication instead");
             }
 
-            if (!await _userManager.CheckPasswordAsync(user, loginModel.Password))
+            if (!await _userService.CheckPasswordAsync(user, loginModel.Password))
             {
                 return BadRequest("Invalid credentials");
             }
 
-            var roles = await _userManager.GetRolesAsync(user);
+            var roles = await _userService.GetUserRoles(user);
 
             var authClaims = new List<Claim>
                 {
@@ -167,11 +164,11 @@ namespace MusicAppApi.API.Controllers
         [HttpGet("ConfirmEmail")]
         public async Task<IActionResult> ConfirmEmail(string token, string email)
         {
-            var user = await _userManager.FindByEmailAsync(email);
+            var user = await _userService.GetUserByEmail(email);
             if (user != null)
             {
-                var result = await _userManager.ConfirmEmailAsync(user, token);
-                if (result.Succeeded)
+                var result = await _userService.ConfirmEmail(user, token);
+                if (result)
                 {
                     string htmlContent = System.IO.File.ReadAllText("./wwwroot/Pages/SuccessEmailConfirmation.html");
                     return Content(htmlContent, "text/html");
@@ -186,11 +183,12 @@ namespace MusicAppApi.API.Controllers
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
             // could be changed, but good for now
-            if (await _userManager.Users.AnyAsync(x => x.Email == model.Email))
+            if (await _userService.CheckUserExistsByEmail(model.Email))
                 return BadRequest("User is already registered with such email");
 
-            if (await _userManager.Users.AnyAsync(x => x.UserName == model.Username))
+            if (await _userService.CheckUserExistsByUsername(model.Username))
                 return BadRequest("User is already registered with such username");
+
 
             User user = new User()
             {
@@ -200,25 +198,23 @@ namespace MusicAppApi.API.Controllers
                 AuthType = AuthType.Normal,
                 EmailConfirmed = false,
             };
-
-            var result = await _userManager.CreateAsync(user, model.Password);
+            
+            var result = await _userService.CreateUser(user, model.Password);
             // here
             if (!result.Succeeded)
                 return BadRequest(result.Errors);
 
-            if (!await _roleManager.RoleExistsAsync(AuthConstants.UserRoles.User))
+            if (!await _roleService.CheckRoleExists(AuthConstants.UserRoles.User))
             {
-                await _roleManager.CreateAsync(new Role { Name = AuthConstants.UserRoles.User });
+                await _roleService.CreateRole(new Role { Name = AuthConstants.UserRoles.User });
             }
 
-            await _userManager.AddToRoleAsync(user, AuthConstants.UserRoles.User);
+            await _userService.AddUserToRole(user, AuthConstants.UserRoles.User);
 
             await SentVerificationLinkToEmail(user);
 
             return Ok("User created successfully! Confirm you email, check your email and confirm it");
         }
-
-
 
         [HttpPost("VerifyEmail")]
         [Authorize]
@@ -228,7 +224,7 @@ namespace MusicAppApi.API.Controllers
             if (id == null)
                 return BadRequest("Token expired or something went wrong");
 
-            var user = await _userManager.FindByIdAsync(id.Value);
+            var user = await _userService.GetUserById(Guid.Parse(id.Value));
             if (user == null)
                 return BadRequest("User not found");
 
@@ -245,15 +241,9 @@ namespace MusicAppApi.API.Controllers
             return Ok();
         }
 
-        //[HttpPost]
-        //public async Task<IActionResult> RegisterAdmin([FromBody] RegisterModel registerModel)
-        //{
-        //    return Ok();
-        //}
-
         private async Task SentVerificationLinkToEmail(User user)
         {
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var token = await _userService.GenerateConfirmEmailToken(user);
 
             var confirmationLink = Url.Action("ConfirmEmail", "Authentication", new { token, email = user.Email }, Request.Scheme);
             var message = new Message(new string[] { user.Email }, "Confirm email",
