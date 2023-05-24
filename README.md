@@ -23,3 +23,8 @@ Lab 3
 Dima Serafym
 Implemented upload audio feature
 https://github.com/JLW157/music-app-api/pull/2
+
+Lab 4
+Dima Serafym
+Reafactored controllers into services
+https://github.com/JLW157/music-app-api/pull/5
