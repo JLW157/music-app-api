@@ -20,6 +20,8 @@ using MusicAppApi.API.Hub;
 using MusicAppApi.Core.Constants;
 using MusicAppApi.Core.Interfaces;
 
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers((options) =>
