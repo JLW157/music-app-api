@@ -18,6 +18,7 @@ using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using MusicAppApi.API.Hub;
 using MusicAppApi.Core.Constants;
+using MusicAppApi.Core.interfaces;
 using MusicAppApi.Core.Interfaces;
 
 
@@ -94,6 +95,10 @@ builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 builder.Services.AddTransient<IJwtGenerator, JwtGenerator>();
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddTransient<IAzureBlobService, AzureBlobService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAudioService, AudioService>();
+builder.Services.AddScoped<IGenreService, GenreService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                .AddJwtBearer(opts =>

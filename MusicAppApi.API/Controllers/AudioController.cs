@@ -12,6 +12,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using MusicAppApi.Core.Interfaces;
 using MusicAppApi.Models.Enums;
+using MusicAppApi.Core.interfaces;
 
 namespace MusicAppApi.API.Controllers
 {
@@ -19,38 +20,43 @@ namespace MusicAppApi.API.Controllers
     [ApiController]
     public class AudioController : ControllerBase
     {
-        private readonly MusicAppDbContext _context;
+        private readonly IAudioService _audioService;
+        private readonly IUserService _userService;
         private readonly IMapper _mapper;
         private readonly IAzureBlobService _azureBlobService;
+        private readonly IGenreService _genreService;
 
-        public AudioController(MusicAppDbContext context,
-            IMapper mapper, IAzureBlobService blobService)
+        public AudioController(
+            IMapper mapper, 
+            IAzureBlobService blobService, 
+            IAudioService audioService, 
+            IUserService userService, 
+            IGenreService genreService)
         {
-            this._context = context;
             this._mapper = mapper;
             _azureBlobService = blobService;
+            _audioService = audioService;
+            _userService = userService;
+            _genreService = genreService;
         }
 
         //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         public async Task<IEnumerable<AudioResponse>> GetAudios()
         {
-            var audios = await _context.Audios.Include(x => x.Artists)
-                .Include(x => x.Genre)
-                .ToListAsync();
+            var audios = await _audioService.GetAllAudios();
 
-            return _mapper.Map<List<Audio>, List<AudioResponse>>(audios);
+            return audios;
         }
 
         [HttpGet("audioByName")]
         public async Task<ActionResult<AudioResponse>> GetAudioByName([FromQuery]string name)
         {
-            var audio = await _context.Audios.Include(x => x.Artists).Include(x => x.Genre)
-                .FirstOrDefaultAsync(a => a.Name == name);
+            var audio = await _audioService.GetAudioByName(name);
 
             if (audio != null)
             {
-                return Ok(_mapper.Map<Audio, AudioResponse>(audio));
+                return Ok(audio);
             }
 
             return BadRequest("Audio not found");
@@ -59,16 +65,9 @@ namespace MusicAppApi.API.Controllers
         [HttpGet("userAudiosByUsername")]
         public async Task<ActionResult> GetUserAudiosByUsername([FromQuery]string username)
         {
-            // todo: implement user audios
-
-            var audios = await _context.Audios
-                .Include(x => x.Artists)
-                .Include(x => x.Genre)
-                .Where(x => x.Artists.Any(x => x.UserName == username)).ToListAsync();
-
-            var mappedAudios = _mapper.Map<List<Audio>, List<AudioResponse>>(audios);
+            var audios = await _audioService.GetAudiosByName(username);
             
-            return Ok(mappedAudios);
+            return Ok(audios);
         }
 
         [HttpGet("userAudios")]
@@ -81,20 +80,15 @@ namespace MusicAppApi.API.Controllers
                 return BadRequest("Invalid user");
             }
 
-            var artist = await _context.Users.FirstOrDefaultAsync(x => x.Id == Guid.Parse(artistIdClaim.Value));
+            var artist = await _userService.GetUserById(Guid.Parse(artistIdClaim.Value));
             if (artist == null)
             {
                 return BadRequest("Invalid user");
             }
 
-            var audios = await _context.Audios
-                .Include(x => x.Artists)
-                .Include(x => x.Genre)
-                .Where(a => a.Artists.Any(a => a.Id == artist.Id))
-                .ToListAsync();
-
-            var mappedAudios = _mapper.Map<List<Audio>, List<AudioResponse>>(audios);
-            return Ok(mappedAudios);
+            var userAudios = await _audioService.GetUserAudios(artist.Id);
+            
+            return Ok(userAudios);
         }
 
 
@@ -102,7 +96,7 @@ namespace MusicAppApi.API.Controllers
         public async Task<ActionResult> CreateAudio(AudioCreationDTO audioCreationDTO)
         {
             // Check genre exists
-            var genreExisting = await _context.Genres.FirstOrDefaultAsync(x => x.Id == Guid.Parse(audioCreationDTO.Genre));
+            var genreExisting = await _genreService.GetGenreById(Guid.Parse(audioCreationDTO.Genre));
 
             if (genreExisting == null)
             {
@@ -111,7 +105,7 @@ namespace MusicAppApi.API.Controllers
 
             // Check correctness of artists
 
-            var artists = await _context.Users.Where(a => audioCreationDTO.Artists.Contains(a.Id.ToString())).ToListAsync();
+            var artists = await _userService.GetUsersBySpecificCase(audioCreationDTO.Artists);
 
             if ((artists == null) || (artists.Count != audioCreationDTO.Artists.Count))
             {
@@ -127,7 +121,7 @@ namespace MusicAppApi.API.Controllers
                 AudioUrl = audioCreationDTO.AudioUrl
             };
 
-            await _context.Audios.AddAsync(audioToAdd);
+            await _audioService.CreateAudio(audioToAdd);
 
             return Ok(_mapper.Map<Audio, AudioResponse>(audioToAdd));
         }
@@ -155,7 +149,7 @@ namespace MusicAppApi.API.Controllers
                     return BadRequest("Invalid user");
                 }
 
-                var artist = await _context.Users.FirstOrDefaultAsync(x => x.Id == Guid.Parse(artistIdClaim.Value));
+                var artist = await _userService.GetUserById(Guid.Parse(artistIdClaim.Value));
                 if (artist == null)
                 {
                     return BadRequest("Invalid user");
@@ -178,8 +172,7 @@ namespace MusicAppApi.API.Controllers
                     audio.PosterUrl = imageUploadResult.BlobUrl;
                 }
 
-                await _context.Audios.AddAsync(audio);
-                await _context.SaveChangesAsync();
+                await _audioService.CreateAudio(audio);
             }
             catch (Exception e)
             {
@@ -222,9 +215,9 @@ namespace MusicAppApi.API.Controllers
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IEnumerable<AudioResponse>> GetPopularAudios()
         {
-            var audios = await _context.Audios.Include(x => x.Genre).Include(x => x.Artists).Take(20).ToListAsync();
+            var audios = await _audioService.GetAudiosWithLimit(20);
 
-            return _mapper.Map<List<Audio>, List<AudioResponse>>(audios);
+            return audios;
         }
 
         [HttpGet("test")]
