@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
-using MusicAppApi.Core.interfaces;
+using MusicAppApi.Core.interfaces.Services;
 using MusicAppApi.Models.DbModels;
 
 namespace MusicAppApi.Core.Services

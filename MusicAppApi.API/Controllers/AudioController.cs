@@ -10,9 +10,8 @@ using MusicAppApi.Models.DTO_s;
 using MusicAppApi.Models.DTO_s.Audio;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using MusicAppApi.Core.Interfaces;
 using MusicAppApi.Models.Enums;
-using MusicAppApi.Core.interfaces;
+using MusicAppApi.Core.interfaces.Services;
 
 namespace MusicAppApi.API.Controllers
 {

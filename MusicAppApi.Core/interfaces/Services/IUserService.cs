@@ -7,7 +7,7 @@ using MusicAppApi.Core.interfaces.Repositories;
 using MusicAppApi.Models.DbModels;
 using MusicAppApi.Models.Responses;
 
-namespace MusicAppApi.Core.interfaces
+namespace MusicAppApi.Core.interfaces.Services
 {
     public interface IUserService
     {

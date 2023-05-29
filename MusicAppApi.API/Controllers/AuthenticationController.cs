@@ -25,7 +25,7 @@ using MusicAppApi.Core.Interfaces;
 using MusicAppApi.Models.GeneralModels;
 using Newtonsoft.Json.Linq;
 using Elastic.Clients.Elasticsearch;
-using MusicAppApi.Core.interfaces;
+using MusicAppApi.Core.interfaces.Services;
 
 namespace MusicAppApi.API.Controllers
 {

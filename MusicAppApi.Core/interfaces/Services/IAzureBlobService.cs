@@ -2,7 +2,7 @@
 using MusicAppApi.Models.Enums;
 using MusicAppApi.Models.Responses;
 
-namespace MusicAppApi.Core.Interfaces
+namespace MusicAppApi.Core.interfaces.Services
 {
     public interface IAzureBlobService
     {

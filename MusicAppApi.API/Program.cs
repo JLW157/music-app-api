@@ -18,10 +18,10 @@ using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using MusicAppApi.API.Hub;
 using MusicAppApi.Core.Constants;
-using MusicAppApi.Core.interfaces;
 using MusicAppApi.Core.Interfaces;
-
-
+using MusicAppApi.Core.interfaces.Services;
+using MusicAppApi.Core.interfaces.Utils;
+using MusicAppApi.Core.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +37,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSignalR();
+builder.Services.AddMemoryCache();
 
 builder.WebHost.ConfigureAppConfiguration((context, config) =>
 {
@@ -95,10 +96,13 @@ builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 builder.Services.AddTransient<IJwtGenerator, JwtGenerator>();
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddTransient<IAzureBlobService, AzureBlobService>();
+builder.Services.AddSingleton<ICachingService, CachingService>();
+
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAudioService, AudioService>();
 builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IPagingUtils, PagingUtils>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                .AddJwtBearer(opts =>

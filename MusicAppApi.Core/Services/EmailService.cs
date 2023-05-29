@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Options;
 using MimeKit;
-using MusicAppApi.Core.Interfaces;
+using MusicAppApi.Core.interfaces.Services;
 using MusicAppApi.Models.Configurations;
 using MusicAppApi.Models.GeneralModels;
 

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MusicAppApi.Core.Constants;
-using MusicAppApi.Core.interfaces;
+using MusicAppApi.Core.interfaces.Services;
 using MusicAppApi.Models.DbModels;
 using MusicAppApi.Models.Responses;
 

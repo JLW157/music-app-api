@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MusicAppApi.Models.GeneralModels;
 
-namespace MusicAppApi.Core.Interfaces
+namespace MusicAppApi.Core.interfaces.Services
 {
     public interface IEmailService
     {

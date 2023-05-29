@@ -2,7 +2,7 @@
 using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using MusicAppApi.Core.Interfaces;
+using MusicAppApi.Core.interfaces.Services;
 using MusicAppApi.Models.Enums;
 using MusicAppApi.Models.Responses;
 

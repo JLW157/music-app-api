@@ -13,5 +13,10 @@ namespace MusicAppApi.Core.Constants
             public const string AudioBlobContainerName = "audios";
             public const string ImageBlobContainerName = "audio-images";
         }
+
+        public static class CacheConstants
+        {
+            public const string GenreCacheKey = "GenreCacheKey";
+        }
     }
 }
