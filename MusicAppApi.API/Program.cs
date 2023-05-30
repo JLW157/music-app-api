@@ -33,6 +33,11 @@ builder.Services.AddControllers((options) =>
     // badrequest and unauthorized formatterw
     options.Filters.Add(new HttpResponseFilter());
 });
+
+// 1. Add custom exception for better error handling in your app
+// 2. Add Refresh tokens
+// 3. SearchApiController refactor this to Separate service
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
