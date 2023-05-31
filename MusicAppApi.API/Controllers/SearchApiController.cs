@@ -14,6 +14,7 @@ using MusicAppApi.Core.interfaces.Utils;
 using MusicAppApi.Models.Enums;
 using static System.Net.WebRequestMethods;
 using System.Drawing.Printing;
+using Elastic.Clients.Elasticsearch;
 
 namespace MusicAppApi.API.Controllers
 {
@@ -24,26 +25,21 @@ namespace MusicAppApi.API.Controllers
         private readonly MusicAppDbContext _context;
         private readonly IMapper _mapper;
         private readonly IPagingUtils _pagingUtils;
-        public SearchApiController(MusicAppDbContext context, IMapper mapper, IPagingUtils pagingUtils)
+        private readonly IConfiguration _configuration;
+        public SearchApiController(MusicAppDbContext context, IMapper mapper, IPagingUtils pagingUtils, IConfiguration configuration)
         {
             _context = context;
             _mapper = mapper;
             _pagingUtils = pagingUtils;
+            _configuration = configuration;
         }
 
         [HttpGet("audios")]
-        public async Task<ActionResult<IEnumerable<AudioResponse>>> GetAudios([FromQuery] string searchTerm)
+        public async Task<ActionResult<IEnumerable<SearchItem>>> GetAudios([FromQuery] string searchTerm)
         {
-            var res = await _context.Audios
-                .Where(x => x.Name.ToLower().Trim().Contains(searchTerm.ToLower().Trim()))
-                .Include(x => x.Artists)
-                .Include(x => x.Genre)
-                .ToListAsync();
+            var res = await SearchAsync(searchTerm);
 
-
-            var mappedRes = _mapper.Map<List<Audio>, List<AudioResponse>>(res);
-
-            return Ok(mappedRes);
+            return Ok(res);
         }
 
         [HttpPost("GetMainSearchResults")]
@@ -65,42 +61,11 @@ namespace MusicAppApi.API.Controllers
 
             result.PageSize = searchRequest.PageSize;
 
-            // audios search
-            var audios = _context.Audios
-                .Where(x => x.Name.ToLower().Contains(searchRequest.Term))
-                .Include(x => x.Genre)
-                .Include(x => x.Artists);
+            var searchResults = await SearchAsync(searchRequest.Term, genreId);
 
-            // artist search
-            var artists = _context.Users
-                .Where(x => x.UserName.ToLower().Contains(searchRequest.Term.ToLower()));
+            result.TotalResultsCount += searchResults.Count();
 
-            result.TotalResultsCount += await artists.CountAsync();
-            result.TotalResultsCount += await audios.CountAsync();
-            var searchResultsAudios = await audios
-                .Select(a => new SearchItem()
-                {
-                    ItemType = SearchResultItemType.Audio,
-                    Score = (a.Name.ToLower().Contains(searchRequest.Term) ? 10 : 0)
-                            + (genreId != null && a.GenreId == genreId ? 10 : 0),
-                    ImageUrl = a.PosterUrl,
-                    Name = a.Name
-                })
-                .ToListAsync();
-
-            var searchResultsArtists = await artists
-                .Select(u => new SearchItem()
-                {
-                    ItemType = SearchResultItemType.Artist,
-                    Score = (u.UserName.ToLower().Contains(searchRequest.Term) ? 25 : 0),
-                    // todo: change this in the future (add user pics)
-                    ImageUrl = "https://audiostorageweb123.blob.core.windows.net/user-images/defaultUserImg.png;",
-                    Name = u.UserName
-                })
-                .ToListAsync();
-
-            var searchResults = searchResultsAudios
-                .Union(searchResultsArtists)
+            searchResults = searchResults
                 .OrderByDescending(sr => sr.Score)
                 .Skip((searchRequest.CurrentPage - 1) * searchRequest.PageSize)
                 .Take(searchRequest.PageSize)
@@ -109,13 +74,11 @@ namespace MusicAppApi.API.Controllers
             result.SearchResultItems = searchResults;
 
             // and now pagination part
-
             result.CurrentPage = searchRequest.CurrentPage;
             result.TotalPages = _pagingUtils.GetPagerTotalPages(searchRequest.PageSize, result.TotalResultsCount);
 
             return Ok(result);
         }
-
 
         public class SearchResultsContainer
         {
@@ -160,6 +123,51 @@ namespace MusicAppApi.API.Controllers
                 score += 25;
 
             return score;
+        }
+
+        private async Task<IEnumerable<SearchItem>> SearchAsync(string searchTerm, Guid? genreId = null)
+        {
+            var frontUrl = _configuration.GetSection("front-url").Value;
+
+            var audios = _context.Audios
+                .Where(x => x.Name.ToLower().Contains(searchTerm))
+                .Include(x => x.Genre)
+                .Include(x => x.Artists);
+
+            // artist search
+            var artists = _context.Users
+                .Where(x => x.UserName.ToLower().Contains(searchTerm));
+
+            var searchResultsAudios = await audios
+                .Select(a => new SearchItem
+                {
+                    ItemType = SearchResultItemType.Audio,
+                    Score = (a.Name.ToLower().Contains(searchTerm) ? 10 : 0)
+                            + (genreId != null && a.GenreId == genreId ? 10 : 0),
+                    ImageUrl = a.PosterUrl,
+                    Name = a.Name,
+                    ItemRelativeUrl = $"/{a.Artists.First().UserName}/{a.Name}",
+                    ItemAbsoluteUrl = $"{frontUrl}/{a.Artists.First().UserName}/{a.Name}"
+                })
+                .ToListAsync();
+
+            var searchResultsArtists = await artists
+                .Select(u => new SearchItem
+                {
+                    ItemType = SearchResultItemType.Artist,
+                    Score = (u.UserName.ToLower().Contains(searchTerm) ? 25 : 0),
+                    // todo: change this in the future (add user pics)
+                    ImageUrl = "https://audiostorageweb123.blob.core.windows.net/user-images/defaultUserImg.png",
+                    Name = u.UserName,
+                    ItemRelativeUrl = $"/{u.UserName}",
+                    ItemAbsoluteUrl = $"{frontUrl}/{u.UserName}"
+                })
+                .ToListAsync();
+
+            var searchResults = searchResultsAudios
+                .Union(searchResultsArtists);
+
+            return searchResults;
         }
 
         #endregion
