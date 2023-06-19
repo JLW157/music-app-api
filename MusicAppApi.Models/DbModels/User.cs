@@ -10,7 +10,8 @@ namespace MusicAppApi.Models.DbModels
     public class User : IdentityUser<Guid>
     {
         public AuthType AuthType { get; set; }
-        public ICollection<Audio> Audios { get; set; }
+        public virtual ICollection<Audio> Audios { get; set; }
+        public virtual ICollection<Set> Sets { get; set; }
     }
 
     public enum AuthType

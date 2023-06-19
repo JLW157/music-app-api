@@ -15,6 +15,7 @@ using MusicAppApi.Models.Enums;
 using static System.Net.WebRequestMethods;
 using System.Drawing.Printing;
 using Elastic.Clients.Elasticsearch;
+using MailKit.Search;
 
 namespace MusicAppApi.API.Controllers
 {
@@ -37,7 +38,7 @@ namespace MusicAppApi.API.Controllers
         [HttpGet("audios")]
         public async Task<ActionResult<IEnumerable<SearchItem>>> GetAudios([FromQuery] string searchTerm)
         {
-            var res = await SearchAsync(searchTerm);
+            var res = await SearchAutocompleteAsync(searchTerm);
 
             return Ok(res);
         }
@@ -51,22 +52,15 @@ namespace MusicAppApi.API.Controllers
                 return BadRequest("SearchTerm can`t be empty");
             }
 
-            Guid? genreId = null;
-            if (!string.IsNullOrEmpty(searchRequest.GenreId))
-            {
-                genreId = Guid.Parse(searchRequest.GenreId);
-            }
-
             var result = new SearchResultsContainer();
 
             result.PageSize = searchRequest.PageSize;
 
-            var searchResults = await SearchAsync(searchRequest.Term, genreId);
+            var searchResults = await GetMainSearchResultsSearchAsync(searchRequest);
 
             result.TotalResultsCount += searchResults.Count();
 
-            searchResults = searchResults
-                .OrderByDescending(sr => sr.Score)
+            searchResults = searchResults.OrderByDescending(s => s.Score)
                 .Skip((searchRequest.CurrentPage - 1) * searchRequest.PageSize)
                 .Take(searchRequest.PageSize)
                 .ToList();
@@ -90,10 +84,10 @@ namespace MusicAppApi.API.Controllers
 
             public SearchResultsContainer()
             {
-                SearchResultItems = new List<SearchItem>();
+                SearchResultItems = new List<SearchGetMainSearchResultItem>();
             }
 
-            public IEnumerable<SearchItem> SearchResultItems { get; set; }
+            public IEnumerable<SearchGetMainSearchResultItem> SearchResultItems { get; set; }
         }
 
         #region PrivateMethods
@@ -125,7 +119,7 @@ namespace MusicAppApi.API.Controllers
             return score;
         }
 
-        private async Task<IEnumerable<SearchItem>> SearchAsync(string searchTerm, Guid? genreId = null)
+        private async Task<IEnumerable<SearchItem>> SearchAutocompleteAsync(string searchTerm, Guid? genreId = null)
         {
             var frontUrl = _configuration.GetSection("front-url").Value;
 
@@ -168,6 +162,74 @@ namespace MusicAppApi.API.Controllers
                 .Union(searchResultsArtists);
 
             return searchResults;
+        }
+
+        private async Task<IEnumerable<SearchGetMainSearchResultItem>> GetMainSearchResultsSearchAsync(
+            GetMainSearchResultsRequest searchResultsRequest)
+        {
+            var frontUrl = _configuration.GetSection("front-url").Value;
+            List<SearchGetMainSearchResultItem> searchItems = new List<SearchGetMainSearchResultItem>();
+
+            if (searchResultsRequest.SearchResultType == SearchRequestType.All || searchResultsRequest.SearchResultType == SearchRequestType.Tracks)
+            {
+                var audios = _context.Audios
+                    .Where(x => x.Name.ToLower().Contains(searchResultsRequest.Term))
+                    .Include(x => x.Genre)
+                    .Include(x => x.Artists);
+
+                searchItems.AddRange(await audios
+                    .Select(a => new SearchGetMainSearchResultItem
+                    {
+                        ItemType = SearchResultItemType.Audio,
+                        Score = (a.Name.ToLower().Contains(searchResultsRequest.Term) ? 10 : 0),
+                        AudioItem = new AudioSearchResponse()
+                        {
+                            Id = a.Id,
+                            AudioUrl = a.AudioUrl,
+                            PosterUrl = a.PosterUrl,
+                            Name = a.Name,
+                            ItemRelativeUrl = $"/{a.Artists.First().UserName}/{a.Name}",
+                            ItemAbsoluteUrl = $"{frontUrl}/{a.Artists.First().UserName}/{a.Name}",
+                            PlayedCount = a.PlayedCount
+                        },
+
+                    }).ToListAsync());
+            }
+
+            if (searchResultsRequest.SearchResultType == SearchRequestType.All || searchResultsRequest.SearchResultType == SearchRequestType.Users)
+            {
+                // artist search
+                var artists = _context.Users
+                    .Where(x => x.UserName.ToLower().Contains(searchResultsRequest.Term));
+
+
+                searchItems.AddRange(await artists
+                    .Select(u => new SearchGetMainSearchResultItem()
+                    {
+                        ItemType = SearchResultItemType.Artist,
+                        Score = (u.UserName.ToLower().Contains(searchResultsRequest.Term) ? 20 : 0),
+                        UserItem = new UserSearchResponse()
+                        {
+                            Id = u.Id,
+                            // todo: change this in the future (add user pics)
+                            UserImageUrl = "https://audiostorageweb123.blob.core.windows.net/user-images/defaultUserImg.png",
+                            Username = u.UserName,
+                            ProfileRelativeUrl = $"/{u.UserName}",
+                            ProfileAbsoluteUrl = $"{frontUrl}/{u.UserName}"
+                        }
+                    }).ToListAsync());
+            }
+
+            return searchItems;
+        }
+
+        public class SearchGetMainSearchResultItem
+        {
+            public float Score { get; set; }
+            public SearchResultItemType ItemType { get; set; }
+            public AudioSearchResponse AudioItem { get; set; }
+            public UserSearchResponse UserItem { get; set; }
+
         }
 
         #endregion

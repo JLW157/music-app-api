@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MusicAppApi.Core;
 
@@ -11,9 +12,11 @@ using MusicAppApi.Core;
 namespace MusicAppApi.Core.Migrations
 {
     [DbContext(typeof(MusicAppDbContext))]
-    partial class MusicAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230608103230_Sets Added")]
+    partial class SetsAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,21 +24,6 @@ namespace MusicAppApi.Core.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("AudioSet", b =>
-                {
-                    b.Property<Guid>("AudiosId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("SetsId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("AudiosId", "SetsId");
-
-                    b.HasIndex("SetsId");
-
-                    b.ToTable("AudioSet");
-                });
 
             modelBuilder.Entity("AudioUser", b =>
                 {
@@ -178,9 +166,14 @@ namespace MusicAppApi.Core.Migrations
                     b.Property<string>("PosterUrl")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("SetId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("GenreId");
+
+                    b.HasIndex("SetId");
 
                     b.ToTable("Audios");
                 });
@@ -238,9 +231,10 @@ namespace MusicAppApi.Core.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PosterUrl")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("UserId")
@@ -249,9 +243,6 @@ namespace MusicAppApi.Core.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("Name", "UserId")
-                        .IsUnique();
 
                     b.ToTable("Sets");
                 });
@@ -323,21 +314,6 @@ namespace MusicAppApi.Core.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
-                });
-
-            modelBuilder.Entity("AudioSet", b =>
-                {
-                    b.HasOne("MusicAppApi.Models.DbModels.Audio", null)
-                        .WithMany()
-                        .HasForeignKey("AudiosId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MusicAppApi.Models.DbModels.Set", null)
-                        .WithMany()
-                        .HasForeignKey("SetsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("AudioUser", b =>
@@ -414,6 +390,10 @@ namespace MusicAppApi.Core.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("MusicAppApi.Models.DbModels.Set", null)
+                        .WithMany("Audios")
+                        .HasForeignKey("SetId");
+
                     b.Navigation("Genre");
                 });
 
@@ -426,6 +406,11 @@ namespace MusicAppApi.Core.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MusicAppApi.Models.DbModels.Set", b =>
+                {
+                    b.Navigation("Audios");
                 });
 
             modelBuilder.Entity("MusicAppApi.Models.DbModels.User", b =>

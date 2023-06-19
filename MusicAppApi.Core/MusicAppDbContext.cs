@@ -18,7 +18,17 @@ namespace MusicAppApi.Core
 
         }
 
-        public DbSet<Genre> Genres { get; set; }
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            builder.Entity<Set>()
+                .HasIndex(e => new { e.Name, e.UserId })
+                .IsUnique();
+            
+            base.OnModelCreating(builder);
+        }
+
+        public  DbSet<Genre> Genres { get; set; }
         public DbSet<Audio> Audios { get; set; }
+        public DbSet<Set> Sets { get; set; }
     }
 }

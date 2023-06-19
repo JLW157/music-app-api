@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MusicAppApi.Core;
 
@@ -11,9 +12,11 @@ using MusicAppApi.Core;
 namespace MusicAppApi.Core.Migrations
 {
     [DbContext(typeof(MusicAppDbContext))]
-    partial class MusicAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230615132408_Sets Audios")]
+    partial class SetsAudios
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

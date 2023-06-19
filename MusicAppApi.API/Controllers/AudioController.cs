@@ -222,6 +222,7 @@ namespace MusicAppApi.API.Controllers
         [HttpGet("test")]
         public string ForTest()
         {
+            throw new ArgumentException("Super error");
             return "Success";
         }
     }

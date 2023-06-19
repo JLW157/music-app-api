@@ -16,11 +16,14 @@ using System.Text;
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using MusicAppApi.API.Extensions;
 using MusicAppApi.API.Hub;
 using MusicAppApi.Core.Constants;
 using MusicAppApi.Core.Interfaces;
+using MusicAppApi.Core.interfaces.Repositories;
 using MusicAppApi.Core.interfaces.Services;
 using MusicAppApi.Core.interfaces.Utils;
+using MusicAppApi.Core.Repositories;
 using MusicAppApi.Core.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -109,6 +112,9 @@ builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IPagingUtils, PagingUtils>();
 
+builder.Services.AddScoped<ISetsRepository, SetsRepository>();
+builder.Services.AddScoped<ISetsService, SetsService>();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                .AddJwtBearer(opts =>
                {
@@ -170,12 +176,16 @@ builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection(
 builder.Services.AddDbContext<MusicAppDbContext>(opts =>
 {
     var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
-    opts.UseSqlServer(connStr);
+    opts
+        //.UseLazyLoadingProxies()
+        .UseSqlServer(connStr);
 });
 
 builder.Services.RegisterCoreDependencies();
 
 var app = builder.Build();
+
+app.UseCustomExceptionMiddleware();
 
 // Migrate latest database changes during startup
 using (var scope = app.Services.CreateScope())

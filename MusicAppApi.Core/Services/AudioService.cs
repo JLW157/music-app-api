@@ -66,7 +66,7 @@ namespace MusicAppApi.Core.Services
         public async Task<IEnumerable<AudioResponse>?> GetAudiosByName(string username)
         {
             var audio = await _context.Audios.Include(x => x.Artists).Include(x => x.Genre)
-                .Where(a => a.Name == username).ToListAsync();
+                .Where(a => a.Artists.Any(u => u.UserName == username)).ToListAsync();
 
             return _mapper.Map<List<Audio>, List<AudioResponse>>(audio);
         }
