@@ -19,6 +19,8 @@ namespace MusicAppApi.Core.interfaces.Repositories
 
         Task<IEnumerable<Set>> GetSetsByUsername(string username);
 
+        Task<Set?> GetByNameOfSet(string nameOfSet);
+
         Task<IEnumerable<Audio>> GetAudiosFromSet(Guid setId);
 
         Task SaveChanges();

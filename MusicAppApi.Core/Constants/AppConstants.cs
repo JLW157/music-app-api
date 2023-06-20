@@ -18,5 +18,10 @@ namespace MusicAppApi.Core.Constants
         {
             public const string GenreCacheKey = "GenreCacheKey";
         }
+
+        public static class GeneralConstants
+        {
+            public const int ItemsPerSection = 20;
+        }
     }
 }

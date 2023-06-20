@@ -17,6 +17,8 @@ namespace MusicAppApi.Core.interfaces.Services
         Task<IEnumerable<SetDto>> GetUserSets(Guid userId);
         Task<IEnumerable<SetDto>> GetSetsByUsername(string username);
 
+        Task<SetDto> GetSetByName(string nameOfSet);
+
         Task<AudioResponse?> AddAudioToSet(AddAudioToSetRequest addAudioToSetRequest);
 
         Task<AudioResponse?> RemoveAudioFromSet(RemoveAudioFromSetRequest removeAudioFromSetRequest);

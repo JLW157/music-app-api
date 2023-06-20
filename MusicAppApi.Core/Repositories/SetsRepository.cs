@@ -117,6 +117,12 @@ namespace MusicAppApi.Core.Repositories
             => await _context.Set<Set>().Include(s => s.User).Include(s => s.Audios)
                 .Where(s => s.User.UserName == username).ToListAsync();
 
+        public async Task<Set?> GetByNameOfSet(string nameOfSet)
+            => await _context.Sets.Include(x => x.Audios).ThenInclude(x => x.Artists)
+                .Include(x => x.User)
+                .FirstOrDefaultAsync(x => x.Name == nameOfSet);
+
+
         public async Task<IEnumerable<Audio>> GetAudiosFromSet(Guid setId)
         {
             var res = await _context.Set<Set>()

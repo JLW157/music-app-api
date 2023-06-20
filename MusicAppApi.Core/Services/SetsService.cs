@@ -29,6 +29,16 @@ namespace MusicAppApi.Core.Services
             _mapper = mapper;
         }
 
+        public async Task<SetDto> GetSetByName(string nameOfSet)
+        {
+            var set = await _setsRepository.GetByNameOfSet(nameOfSet);
+
+            if (set == null)
+                throw new Exception("SetNotFoundException");
+
+            return _mapper.Map<Set, SetDto>(set);
+        }
+
         public async Task<CreateSetResponse> CreateSet(CreateSetRequestForService createSetRequest)
         {
             CreateSetResponse createSetResponse = new CreateSetResponse()
