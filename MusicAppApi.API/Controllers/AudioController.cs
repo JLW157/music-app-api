@@ -12,6 +12,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using MusicAppApi.Models.Enums;
 using MusicAppApi.Core.interfaces.Services;
+using MusicAppApi.Models.DTO_s.Sets;
 
 namespace MusicAppApi.API.Controllers
 {
@@ -123,6 +124,13 @@ namespace MusicAppApi.API.Controllers
             await _audioService.CreateAudio(audioToAdd);
 
             return Ok(_mapper.Map<Audio, AudioResponse>(audioToAdd));
+        }
+
+        [HttpGet("getPopularSongs")]
+        [AllowAnonymous]
+        public async Task<ActionResult<AudioResponse>> GetPopularSongs()
+        {
+            return Ok(await _audioService.GetPopularSongs());
         }
 
         [HttpPost("upload")]
