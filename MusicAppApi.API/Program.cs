@@ -69,11 +69,10 @@ builder.Services.AddCors(opt =>
 
     opt.AddDefaultPolicy(builderCors =>
     {
-        builderCors.WithOrigins("http://localhost:5173", frontUrl) // Replace 'frontUrl' with the actual allowed origin
+        builderCors.WithOrigins(frontUrl) // Replace 'frontUrl' with the actual allowed origin
             .AllowAnyMethod()
             .AllowAnyHeader()
-            .AllowCredentials()
-            .WithExposedHeaders(new string[] { "totalAmountOfRecords" });
+            .AllowCredentials();
     });
 });
 
