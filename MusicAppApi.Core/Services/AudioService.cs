@@ -5,10 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using MusicAppApi.Core.Constants;
 using MusicAppApi.Core.interfaces.Repositories;
 using MusicAppApi.Core.interfaces.Services;
 using MusicAppApi.Models.DbModels;
 using MusicAppApi.Models.DTO_s;
+using MusicAppApi.Models.DTO_s.Sets;
 using Org.BouncyCastle.Asn1.X509;
 
 namespace MusicAppApi.Core.Services
@@ -54,6 +56,20 @@ namespace MusicAppApi.Core.Services
 
             return mappedAudios;
         }
+
+        public async Task<IEnumerable<AudioResponse>> GetPopularSongs()
+        {
+            var popAudios = await _context.Set<Audio>().OrderByDescending(x => x.PlayedCount).Take(AppConstants.GeneralConstants.ItemsPerSection).ToListAsync();
+
+            return _mapper.Map<IEnumerable<Audio>, IEnumerable<AudioResponse>>(popAudios);
+        }
+
+        //public async Task<IEnumerable<AudioResponse>> GetNewlySongs()
+        //{
+        //    var popAudios = await _context.Set<Audio>().OrderByDescending(x => x.).Take(AppConstants.GeneralConstants.ItemsPerSection).ToListAsync();
+
+        //    return _mapper.Map<IEnumerable<Audio>, IEnumerable<AudioResponse>>(popAudios);
+        //}
 
         public async Task<AudioResponse> GetAudioByName(string username)
         {

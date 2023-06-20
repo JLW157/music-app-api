@@ -8,6 +8,7 @@ using MusicAppApi.Core.Services;
 using MusicAppApi.Models.DTO_s.Sets;
 using MusicAppApi.Models.Requests;
 using MusicAppApi.Models.Responses;
+using Org.BouncyCastle.Asn1;
 
 namespace MusicAppApi.API.Controllers
 {
@@ -44,13 +45,27 @@ namespace MusicAppApi.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<SetDto>> GetUserSets()
+        public async Task<ActionResult<IEnumerable<SetDto>>> GetUserSets()
         {
             var userId = Guid.Parse(HttpContext.GetUserIdFromClaim());
 
             var sets = await _setsService.GetUserSets(userId);
 
             return Ok(sets);
+        }
+
+        [HttpGet("getAudiosForSet")]
+        [AllowAnonymous]
+        public async Task<ActionResult<SetDto>> GetSetByName([FromQuery] string nameOfSet)
+        {
+            var set = await _setsService.GetSetByName(nameOfSet);
+
+            if (set == null)
+            {
+                return new NotFoundObjectResult("NotFound");
+            }
+
+            return set;
         }
 
         [HttpGet("getSetsByUsername")]
@@ -60,6 +75,14 @@ namespace MusicAppApi.API.Controllers
             var userSets = await _setsService.GetSetsByUsername(username);
 
             return Ok(userSets);
+        }
+
+        [HttpGet("getSetsForProfileUser")]
+        public async Task<ActionResult<IEnumerable<SetDto>>> GetSetsForProfileUser()
+        {
+            var userId = Guid.Parse(HttpContext.GetUserIdFromClaim());
+
+            return Ok(await _setsService.GetUserSets(userId));
         }
 
         [HttpPost("addAudio")]

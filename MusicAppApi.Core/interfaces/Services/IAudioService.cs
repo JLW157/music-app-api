@@ -17,6 +17,9 @@ namespace MusicAppApi.Core.interfaces.Services
 
         Task<IEnumerable<AudioResponse>?> GetUserAudios(Guid userId);
 
+        Task<IEnumerable<AudioResponse>> GetPopularSongs();
+        //Task<IEnumerable<AudioResponse>> GetNewlySongs();
+
         Task<AudioResponse?> GetAudioByName(string username);
         Task<IEnumerable<AudioResponse>?> GetAudiosByName(string username);
         Task<IEnumerable<AudioResponse>?> GetAudiosWithLimit(int limit);
